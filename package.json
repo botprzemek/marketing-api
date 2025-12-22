@@ -49,19 +49,22 @@
     "publish": true
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.10.3",
-    "hono": "4.10.4",
+    "@cloudflare/vitest-pool-workers": "0.10.15",
+    "@types/jsonwebtoken": "^9.0.10",
+    "hono": "4.11.1",
+    "jsonwebtoken": "^9.0.3",
     "typescript": "5.9.3",
-    "uuidv7": "1.0.2",
-    "vite-tsconfig-paths": "5.1.4",
+    "uuidv7": "1.1.0",
+    "vite-tsconfig-paths": "6.0.1",
     "vitest": "3.2.4",
-    "wrangler": "4.45.3"
+    "wrangler": "^4.54.0",
+    "zod": "^4.2.0"
   },
   "scripts": {
     "typegen": "wrangler types",
     "check": "tsc && wrangler deploy --dry-run",
     "deploy": "wrangler deploy --env production",
-    "dev": "wrangler dev --env development",
+    "dev": "wrangler dev",
     "build": "wrangler build",
     "predeploy": "wrangler d1 migrations apply marketing-api --remote",
     "seed": "wrangler d1 migrations apply marketing-api --local",

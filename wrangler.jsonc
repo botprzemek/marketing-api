@@ -1,14 +1,25 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "compatibility_date": "2025-10-08",
+  "compatibility_date": "2025-11-11",
+  "compatibility_flags": ["nodejs_compat"],
   "main": "src/index.ts",
   "minify": true,
   "name": "marketing-api",
   "upload_source_maps": true,
   "workers_dev": true,
   "preview_urls": true,
+  "placement": {
+    "mode": "smart"
+  },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "CLOUDFLARE_ENV": "development",
+    "API_DOMAIN": "marketing-api.botprzemek.pl",
+    "API_HOST": "https://marketing-api.botprzemek.pl",
+    "API_NAME": "marketing-api",
+    "API_VERSION": "1.0.0"
   },
   "d1_databases": [
     {
@@ -17,29 +28,63 @@
       "database_id": "6f5b7118-73a6-4fd0-8071-de2529c84e70"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "6f5b7118-73a6-4fd0-8071-de2529c84e70",
+      "preview_id": "marketing-api"
+    }
+  ],
   "env": {
     "development": {
+      "vars": {
+        "CLOUDFLARE_ENV": "development",
+        "API_DOMAIN": "localhost",
+        "API_HOST": "http://localhost:8787",
+        "API_NAME": "marketing-api",
+        "API_VERSION": "1.0.0"
+      },
       "d1_databases": [
         {
           "binding": "D1",
           "database_name": "marketing-api",
           "database_id": "6f5b7118-73a6-4fd0-8071-de2529c84e70"
         }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "6f5b7118-73a6-4fd0-8071-de2529c84e70",
+          "preview_id": "marketing-api"
+        }
       ]
     },
     "production": {
-      "routes": [
-        {
-          "pattern": "marketing-api.botprzemek.pl",
-          "custom_domain": true
-        }
-      ],
+      "vars": {
+        "CLOUDFLARE_ENV": "production",
+        "API_DOMAIN": "marketing-api.botprzemek.pl",
+        "API_HOST": "https://marketing-api.botprzemek.pl",
+        "API_NAME": "marketing-api",
+        "API_VERSION": "1.0.0"
+      },
       "d1_databases": [
         {
           "binding": "D1",
           "database_name": "marketing-api",
-          "database_id": "4e3ac2fd-0cb6-4b4b-9612-ce5eeb63946c",
+          "database_id": "6f5b7118-73a6-4fd0-8071-de2529c84e70",
           "remote": true
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "6f5b7118-73a6-4fd0-8071-de2529c84e70"
+        }
+      ],
+      "routes": [
+        {
+          "pattern": "marketing-api.botprzemek.pl",
+          "custom_domain": true
         }
       ]
     }
