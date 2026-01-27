@@ -1,3 +1,3 @@
-export default defineEventHandler(async () => {
-  return await $fetch("http://api:3000/users");
+export default defineEventHandler( () => {
+  return $fetch("http://oauth-api:3000/users");
 });

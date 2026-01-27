@@ -47,9 +47,8 @@ services:
       - cache-data:/data
 
   api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
+    build: ./api
+    image: oauth-api:latest
     container_name: oauth-api
     depends_on:
       database:
@@ -79,9 +78,8 @@ services:
       - 3000
 
   management:
-    build:
-      context: ./management
-      dockerfile: Dockerfile
+    build: ./management
+    image: oauth-management:latest
     container_name: oauth-management
     depends_on:
       api:
@@ -106,6 +104,5 @@ services:
         condition: service_started
     ports:
       - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
     volumes:
       - ./proxy:/etc/nginx/conf.d

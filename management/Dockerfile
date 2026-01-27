@@ -1,5 +1,4 @@
-# ---------- Build stage ----------
-FROM node:20-bookworm AS builder
+FROM cgr.dev/chainguard/node:latest AS builder
 
 WORKDIR /app
 
@@ -9,17 +8,16 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# ---------- Runtime stage ----------
-FROM node:20-bookworm-slim
+FROM cgr.dev/chainguard/node:latest
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NITRO_PORT=3000
 ENV NITRO_HOST=0.0.0.0
+ENV NITRO_PORT=3000
 
 COPY --from=builder /app/.output ./.output
 
 EXPOSE 3000
 
-CMD ["node", ".output/server/index.mjs"]
+CMD [".output/server/index.mjs"]

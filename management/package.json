@@ -1,13 +1,11 @@
 {
-  "name": "management",
+  "name": "oauth-management",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "dev": "nuxt dev"
   },
   "dependencies": {
     "nuxt": "^4.2.2",
