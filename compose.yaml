@@ -1,0 +1,111 @@
+networks:
+  default:
+    name: oauth
+    ipam:
+      config:
+        - subnet: 10.0.0.0/27
+          ip_range: 10.0.0.0/27
+          gateway: 10.0.0.1
+
+volumes:
+  database-data:
+  cache-data:
+
+services:
+  database:
+    image: surrealdb/surrealdb:latest-dev
+    container_name: oauth-database
+    entrypoint: /surreal start surrealkv://data
+    user: 0:0
+    environment:
+      SURREAL_STRICT: true
+      SURREAL_AUTH: true
+      SURREAL_USER: root
+      SURREAL_PASS: root
+    expose:
+      - 8000
+    volumes:
+      - database-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    #
+    #
+    # Uncomment the following lines to initialize the database with
+    ports:
+      - "0.0.0.0:8000:8000"
+
+  cache:
+    image: valkey/valkey:latest
+    container_name: oauth-cache
+    entrypoint: valkey-server --appendonly yes
+    expose:
+      - 6379
+    volumes:
+      - cache-data:/data
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: oauth-api
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3000
+
+      APP_ENV: production
+      RUST_LOG: info
+
+      SURREAL_URL: ws://database:8000/rpc
+      SURREAL_NAMESPACE: auth
+      SURREAL_DATABASE: auth
+      SURREAL_USER: root
+      SURREAL_PASS: root
+
+      VALKEY_URL: redis://cache:6379
+
+      JWT_ISSUER: http://acme.local
+      JWT_AUDIENCE: api
+      JWT_TTL_SECONDS: 900
+      REFRESH_TTL_SECONDS: 2592000
+    expose:
+      - 3000
+
+  management:
+    build:
+      context: ./management
+      dockerfile: Dockerfile
+    container_name: oauth-management
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3000
+
+      NODE_ENV: production
+
+      NUXT_PUBLIC_BASE_URL: http://acme.local
+    expose:
+      - 3000
+
+  proxy:
+    container_name: oauth-proxy
+    image: nginx:latest
+    depends_on:
+      api:
+        condition: service_started
+      management:
+        condition: service_started
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - ./proxy:/etc/nginx/conf.d
