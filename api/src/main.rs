@@ -1,36 +1,31 @@
-use axum::{
-  Router,
-  routing::get,
-  Json,
+use std::{
+    io::prelude::*,
+    net::{TcpListener, TcpStream},
+    thread,
 };
-use serde::Serialize;
-use tower_http::cors::CorsLayer;
 
-#[derive(Serialize)]
-struct User {
-  id: u32,
-  email: String,
-  first_name: String,
-  last_name: String,
-}
+fn main() {
+    let listener = TcpListener::bind("0.0.0.0:3000").unwrap();
 
-async fn handler() -> Json<User> {
-  Json(User {
-      id: 1,
-      email: "john.doe@acme.com".to_string(),
-      first_name: "John".to_string(),
-      last_name: "Doe".to_string()
-  })
-}
-
-#[tokio::main]
-async fn main() {
-  let app = Router::new()
-    .route("/*", get(handler))
-    .layer(CorsLayer::permissive());
-
-  if let Ok(listener) = tokio::net::TcpListener::bind("0.0.0.0:3000").await {
     println!("Listening on http://0.0.0.0:3000");
-    let _ = axum::serve(listener, app).await;
-  }
+
+    for stream in listener.incoming() {
+        let stream = stream.unwrap();
+
+        thread::spawn(|| {
+            handle_connection(stream);
+        });
+    }
+}
+
+fn handle_connection(mut stream: TcpStream) {
+    let status_line = "HTTP/1.1 200 OK";
+
+    let contents = "[{\"id\":1,\"email\":\"john.doe@acme.com\",\"first_name\":\"John\",\"last_name\":\"Doe\"}]";
+    let length = contents.len();
+
+    let response =
+        format!("{status_line}\r\nContent-Type: application/json\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    stream.write_all(response.as_bytes()).unwrap();
 }

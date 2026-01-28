@@ -1,30 +1,15 @@
-FROM rust:slim AS base
-
-RUN cargo install cargo-chef
-
-
-
-FROM base AS planner
+FROM cgr.dev/chainguard/rust:latest AS builder
 
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
-RUN cargo chef prepare --recipe-path recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
-
-
-
-FROM base AS builder
-
-WORKDIR /app
-COPY . .
+COPY --chown=nonroot:nonroot . .
 RUN cargo build --release --bin oauth-api
 
 
 
-FROM scratch AS runner
+FROM cgr.dev/chainguard/glibc-dynamic AS runner
 
 WORKDIR /app
-COPY --from=builder /app/target/release/oauth-api /usr/local/bin/oauth-api
+COPY --from=builder --chown=nonroot:nonroot /app/target/release/oauth-api /usr/local/bin/oauth-api
 
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=3000

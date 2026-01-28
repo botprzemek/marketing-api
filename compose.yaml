@@ -31,11 +31,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-    #
-    #
-    # Uncomment the following lines to initialize the database with
-    ports:
-      - "0.0.0.0:8000:8000"
 
   cache:
     image: valkey/valkey:latest

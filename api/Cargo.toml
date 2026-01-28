@@ -8,9 +8,3 @@ name = "oauth-api"
 path = "src/main.rs"
 
 [dependencies]
-axum = "0.8.8"
-serde = { version = "1.0.0", features = ["derive"] }
-serde_json = "1.0.0"
-surrealdb = "2.4.1"
-tokio = { version = "1.0.0", features = ["full"] }
-tower-http = { version = "0.6.8", features = ["cors"] }
