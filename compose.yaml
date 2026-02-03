@@ -13,7 +13,7 @@ volumes:
 
 services:
   database:
-    image: surrealdb/surrealdb:latest-dev
+    image: surrealdb/surrealdb:latest
     container_name: oauth-database
     entrypoint: /surreal start surrealkv://data
     user: 0:0
@@ -31,73 +31,75 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
-  cache:
-    image: valkey/valkey:latest
-    container_name: oauth-cache
-    entrypoint: valkey-server --appendonly yes
-    expose:
-      - 6379
-    volumes:
-      - cache-data:/data
-
-  api:
-    build: ./api
-    image: oauth-api:latest
-    container_name: oauth-api
-    depends_on:
-      database:
-        condition: service_healthy
-      cache:
-        condition: service_started
-    environment:
-      APP_HOST: 0.0.0.0
-      APP_PORT: 3000
-
-      APP_ENV: production
-      RUST_LOG: info
-
-      SURREAL_URL: ws://database:8000/rpc
-      SURREAL_NAMESPACE: auth
-      SURREAL_DATABASE: auth
-      SURREAL_USER: root
-      SURREAL_PASS: root
-
-      VALKEY_URL: redis://cache:6379
-
-      JWT_ISSUER: http://acme.local
-      JWT_AUDIENCE: api
-      JWT_TTL_SECONDS: 900
-      REFRESH_TTL_SECONDS: 2592000
-    expose:
-      - 3000
-
-  management:
-    build: ./management
-    image: oauth-management:latest
-    container_name: oauth-management
-    depends_on:
-      api:
-        condition: service_started
-    environment:
-      APP_HOST: 0.0.0.0
-      APP_PORT: 3000
-
-      NODE_ENV: production
-
-      NUXT_PUBLIC_BASE_URL: http://acme.local
-    expose:
-      - 3000
-
-  proxy:
-    container_name: oauth-proxy
-    image: nginx:latest
-    depends_on:
-      api:
-        condition: service_started
-      management:
-        condition: service_started
     ports:
-      - "0.0.0.0:80:80"
-    volumes:
-      - ./proxy:/etc/nginx/conf.d
+      - "8000:8000"
+
+  # cache:
+  #   image: valkey/valkey:latest
+  #   container_name: oauth-cache
+  #   entrypoint: valkey-server --appendonly yes
+  #   expose:
+  #     - 6379
+  #   volumes:
+  #     - cache-data:/data
+
+  # api:
+  #   build: ./api
+  #   image: oauth/api:latest
+  #   container_name: oauth-api
+  #   depends_on:
+  #     database:
+  #       condition: service_healthy
+  #     cache:
+  #       condition: service_started
+  #   environment:
+  #     APP_HOST: 0.0.0.0
+  #     APP_PORT: 3000
+
+  #     APP_ENV: production
+  #     RUST_LOG: info
+
+  #     SURREAL_URL: ws://database:8000/rpc
+  #     SURREAL_NAMESPACE: auth
+  #     SURREAL_DATABASE: auth
+  #     SURREAL_USER: root
+  #     SURREAL_PASS: root
+
+  #     VALKEY_URL: redis://cache:6379
+
+  #     JWT_ISSUER: http://acme.local
+  #     JWT_AUDIENCE: api
+  #     JWT_TTL_SECONDS: 900
+  #     REFRESH_TTL_SECONDS: 2592000
+  #   expose:
+  #     - 3000
+
+  # management:
+  #   build: ./management
+  #   image: oauth/management:latest
+  #   container_name: oauth-management
+  #   depends_on:
+  #     api:
+  #       condition: service_started
+  #   environment:
+  #     APP_HOST: 0.0.0.0
+  #     APP_PORT: 3000
+
+  #     NODE_ENV: production
+
+  #     NUXT_PUBLIC_BASE_URL: http://acme.local
+  #   expose:
+  #     - 3000
+
+  # proxy:
+  #   container_name: oauth-proxy
+  #   image: nginx:latest
+  #   depends_on:
+  #     api:
+  #       condition: service_started
+  #     management:
+  #       condition: service_started
+  #   ports:
+  #     - "0.0.0.0:80:80"
+  #   volumes:
+  #     - ./proxy:/etc/nginx/conf.d

@@ -1,5 +1,10 @@
 FROM cgr.dev/chainguard/rust:latest AS builder
 
+COPY --chown=nonroot:nonroot Cargo.toml Cargo.lock ./
+RUN mkdir src
+RUN echo "fn main() {}" > src/main.rs
+RUN cargo build --release
+
 WORKDIR /app
 COPY --chown=nonroot:nonroot . .
 RUN cargo build --release --bin oauth-api

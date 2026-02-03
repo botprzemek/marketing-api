@@ -1,31 +1,196 @@
-use std::{
-    io::prelude::*,
-    net::{TcpListener, TcpStream},
-    thread,
+use std::sync::LazyLock;
+use surrealdb::{
+    Surreal,
+    engine::remote::ws::{Client, Ws},
+    opt::auth::Root,
 };
 
-fn main() {
-    let listener = TcpListener::bind("0.0.0.0:3000").unwrap();
+use crate::adapter::net::server;
 
-    println!("Listening on http://0.0.0.0:3000");
+static DB: LazyLock<Surreal<Client>> = LazyLock::new(Surreal::init);
 
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
+mod error {
+    use axum::Json;
+    use axum::http::StatusCode;
+    use axum::response::IntoResponse;
+    use axum::response::Response;
+    use thiserror::Error;
 
-        thread::spawn(|| {
-            handle_connection(stream);
-        });
+    #[derive(Error, Debug)]
+    pub enum Error {
+        #[error("database error")]
+        Db,
+    }
+
+    impl IntoResponse for Error {
+        fn into_response(self) -> Response {
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(self.to_string())).into_response()
+        }
+    }
+
+    impl From<surrealdb::Error> for Error {
+        fn from(error: surrealdb::Error) -> Self {
+            eprintln!("{error}");
+            Self::Db
+        }
     }
 }
 
-fn handle_connection(mut stream: TcpStream) {
-    let status_line = "HTTP/1.1 200 OK";
+mod routes {
+    use crate::DB;
+    use crate::error::Error;
 
-    let contents = "[{\"id\":1,\"email\":\"john.doe@acme.com\",\"first_name\":\"John\",\"last_name\":\"Doe\"}]";
-    let length = contents.len();
+    use axum::{Json, extract::Path};
+    use faker_rand::en_us::internet::Email;
+    use faker_rand::en_us::names::FirstName;
+    use rand::{Rng, distributions::Alphanumeric};
+    use serde::{Deserialize, Serialize};
+    use surrealdb::{RecordId, opt::auth::Record};
 
-    let response =
-        format!("{status_line}\r\nContent-Type: application/json\r\nContent-Length: {length}\r\n\r\n{contents}");
+    const PERSON: &str = "person";
 
-    stream.write_all(response.as_bytes()).unwrap();
+    #[derive(Serialize, Deserialize, Clone)]
+    pub struct PersonData {
+        name: String,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Person {
+        name: String,
+        id: RecordId,
+    }
+
+    pub async fn paths() -> &'static str {
+        r#"
+-----------------------------------------------------------------------------------------------------------------------------------------
+        PATH                |           SAMPLE COMMAND                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------
+/session: See session data  |  curl -X GET    -H "Content-Type: application/json"                      http://localhost:8080/session
+                            |
+/person/{id}:               |
+  Create a person           |  curl -X POST   -H "Content-Type: application/json" -d '{"name":"John"}' http://localhost:8080/person/one
+  Update a person           |  curl -X PUT    -H "Content-Type: application/json" -d '{"name":"Jane"}' http://localhost:8080/person/one
+  Get a person              |  curl -X GET    -H "Content-Type: application/json"                      http://localhost:8080/person/one
+  Delete a person           |  curl -X DELETE -H "Content-Type: application/json"                      http://localhost:8080/person/one
+                            |
+/people: List all people    |  curl -X GET    -H "Content-Type: application/json"                      http://localhost:8080/people
+
+/new_user:  Create a new record user
+/new_token: Get instructions for a new token if yours has expired"#
+    }
+
+    pub async fn session() -> Result<Json<String>, Error> {
+        let res: Option<String> = DB.query("RETURN <string>$session").await?.take(0)?;
+
+        Ok(Json(res.unwrap_or("No session data found!".into())))
+    }
+
+    pub async fn create_person(
+        id: Path<String>,
+        Json(person): Json<PersonData>,
+    ) -> Result<Json<Option<Person>>, Error> {
+        let person = DB.create((PERSON, &*id)).content(person).await?;
+        Ok(Json(person))
+    }
+
+    pub async fn read_person(id: Path<String>) -> Result<Json<Option<Person>>, Error> {
+        let person = DB.select((PERSON, &*id)).await?;
+        Ok(Json(person))
+    }
+
+    pub async fn update_person(
+        id: Path<String>,
+        Json(person): Json<PersonData>,
+    ) -> Result<Json<Option<Person>>, Error> {
+        let person = DB.update((PERSON, &*id)).content(person).await?;
+        Ok(Json(person))
+    }
+
+    pub async fn delete_person(id: Path<String>) -> Result<Json<Option<Person>>, Error> {
+        let person = DB.delete((PERSON, &*id)).await?;
+        Ok(Json(person))
+    }
+
+    pub async fn list_people() -> Result<Json<Vec<Person>>, Error> {
+        let people = DB.select(PERSON).await?;
+        Ok(Json(people))
+    }
+
+    #[derive(Serialize, Deserialize)]
+    struct Params<'a> {
+        name: &'a str,
+        email: &'a str,
+        password: &'a str,
+    }
+
+    pub async fn make_new_user() -> Result<String, Error> {
+        let name = rand::random::<FirstName>().to_string();
+        let email = rand::random::<Email>().to_string();
+        let password = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(7)
+            .map(char::from)
+            .collect::<String>();
+
+        let hashed_password = blake3::hash(password.as_bytes()).to_string();
+
+        let jwt = DB
+            .signup(Record {
+                namespace: "oauth",
+                database: "oauth",
+                access: "account",
+                params: Params {
+                    name: &name,
+                    email: &email,
+                    password: &hashed_password,
+                },
+            })
+            .await?
+            .into_insecure_token();
+        Ok(format!(
+            "New user created!\n\nName: {name}\nPassword: {password}\nToken: {jwt}\n\nTo log in, use this command:\n\nsurreal sql --pretty --token \"{jwt}\""
+        ))
+    }
+
+    pub async fn get_new_token() -> String {
+        let command = r#"curl -X POST -H "Accept: application/json" -d '{"ns":"test","db":"test","ac":"account","user":"your_username","pass":"your_password"}' http://localhost:8000/signin"#;
+        format!(
+            "Need a new token? Use this command:\n\n{command}\n\nThen log in with surreal sql --pretty --token YOUR_TOKEN_HERE"
+        )
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    DB.connect::<Ws>("localhost:8000").await?;
+
+    DB.signin(Root {
+        username: "root",
+        password: "root",
+    })
+    .await?;
+
+    DB.use_ns("oauth").use_db("oauth").await?;
+
+    DB.query(
+        "
+    DEFINE TABLE IF NOT EXISTS person SCHEMALESS
+        PERMISSIONS FOR 
+            CREATE, SELECT WHERE $auth,
+            FOR UPDATE, DELETE WHERE created_by = $auth;
+    DEFINE FIELD IF NOT EXISTS name ON TABLE person TYPE string;
+    DEFINE FIELD IF NOT EXISTS created_by ON TABLE person VALUE $auth READONLY;
+
+    DEFINE INDEX IF NOT EXISTS unique_name ON TABLE user FIELDS name UNIQUE;
+    DEFINE ACCESS IF NOT EXISTS account ON DATABASE TYPE RECORD
+	SIGNUP ( CREATE user SET name = $name, pass = crypto::argon2::generate($pass) )
+	SIGNIN ( SELECT * FROM user WHERE name = $name AND crypto::argon2::compare(pass, $pass) )
+	DURATION FOR TOKEN 15m, FOR SESSION 12h
+;",
+    )
+    .await?;
+
+    server::serve().await?;
+
+    Ok(())
 }
