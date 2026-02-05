@@ -13,7 +13,6 @@ concurrency: production
 jobs:
   release:
     name: Tag and create GitHub release
-    # if: github.event.pull_request.merged == true
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
@@ -31,7 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_API_TAGGING: true
           WITH_V: false
-          INITIAL_VERSION: 1.0.0
+          INITIAL_VERSION: 0.1.0
           DEFAULT_BUMP: patch
           DEFAULT_BRANCH: main
           RELEASE_BRANCHES: main
