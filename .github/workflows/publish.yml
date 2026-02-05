@@ -79,16 +79,30 @@ jobs:
         with:
           platforms: linux/arm64
 
-      - name: Build and push Docker image
+      - name: Build and push API Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./server
+          context: ./api
           file: ./Dockerfile
           platforms: linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ needs.release.outputs.new_tag }}
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}/api:${{ needs.release.outputs.new_tag }}
+            ghcr.io/${{ github.repository }}/api:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Management Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./management
+          file: ./Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/management:${{ needs.release.outputs.new_tag }}
+            ghcr.io/${{ github.repository }}/api:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
