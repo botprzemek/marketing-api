@@ -1,14 +1,19 @@
-FROM node:latest AS builder
+FROM node:25.6-slim AS builder
 
 WORKDIR /app
 
 COPY --chown=nonroot:nonroot package.json package-lock.json ./
-RUN npm ci
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline
 
 COPY --chown=nonroot:nonroot . .
+
 RUN npm run build
 
-FROM cgr.dev/chainguard/node:latest
+
+
+FROM cgr.dev/chainguard/node:latest AS runner
 
 WORKDIR /app
 
