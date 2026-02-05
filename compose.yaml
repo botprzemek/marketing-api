@@ -45,15 +45,15 @@ services:
 
   api:
     image: ghcr.io/not-byte/auth/api:latest
-    container_name: oauthi
+    container_name: auth-api
     depends_on:
       database:
         condition: service_healthy
       cache:
         condition: service_started
     environment:
-      APP_HOST: 0.0.0.0
-      APP_PORT: 3000
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 3000
 
       APP_ENV: production
       RUST_LOG: info

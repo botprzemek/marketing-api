@@ -13,7 +13,7 @@ concurrency: production
 jobs:
   release:
     name: Tag and create GitHub release
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
@@ -39,14 +39,21 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.new_tag }}
-          name: Release ${{ steps.version.outputs.new_tag }}
+          name: ${{ steps.version.outputs.new_tag }}
           body: ${{ steps.version.outputs.changelog }}
 
   publish:
     name: Build and publish Docker image to GitHub Packages
     needs: release
-    # if: needs.release.outputs.part != 'patch'
-    runs-on: ubuntu-24.04-arm
+    if: needs.release.outputs.part != 'patch'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-22.04-arm
+            arch: arm64
     permissions:
       packages: write
       contents: read
@@ -72,19 +79,19 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: arm64
+          platforms: ${{ matrix.arch }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          platforms: linux/arm64
+          platforms: linux/${{ matrix.arch }}
 
       - name: Build and push API Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./api
           file: ./api/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/${{ matrix.arch }}
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/api:${{ needs.release.outputs.new_tag }}
@@ -92,13 +99,13 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
+      
       - name: Build and push Management Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./management
           file: ./management/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/${{ matrix.arch }}
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/management:${{ needs.release.outputs.new_tag }}
