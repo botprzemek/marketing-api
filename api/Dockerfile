@@ -1,13 +1,27 @@
-FROM cgr.dev/chainguard/rust:latest AS builder
+FROM rust:latest AS builder
 
-COPY --chown=nonroot:nonroot Cargo.toml Cargo.lock ./
-RUN mkdir src
-RUN echo "fn main() {}" > src/main.rs
-RUN cargo build --release
+RUN cargo install cargo-chef sccache --locked
+
+ENV RUSTC_WRAPPER=sccache
+ENV SCCACHE_DIR=/sccache
 
 WORKDIR /app
-COPY --chown=nonroot:nonroot . .
-RUN cargo build --release --bin oauth-api
+
+COPY Cargo.toml Cargo.lock ./
+
+RUN cargo chef prepare --recipe-path recipe.json
+
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
+    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
+    cargo chef cook --release --recipe-path recipe.json
+
+COPY . .
+
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
+    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
+    cargo build --release --bin api
 
 
 
@@ -18,8 +32,8 @@ WORKDIR /app
 ENV SERVER_HOST=0.0.0.0
 ENV SERVER_PORT=3000
 
-COPY --from=builder --chown=nonroot:nonroot /app/target/release/oauth-api /usr/local/bin/oauth-api
+COPY --from=builder --chown=nonroot:nonroot /app/target/release/api /usr/local/bin/api
 
 EXPOSE 3000
 
-CMD ["/usr/local/bin/oauth-api"]
+CMD ["/usr/local/bin/api"]

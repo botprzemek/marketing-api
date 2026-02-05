@@ -1,4 +1,4 @@
-FROM cgr.dev/chainguard/node:latest AS builder
+FROM node:latest AS builder
 
 WORKDIR /app
 
