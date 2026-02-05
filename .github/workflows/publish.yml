@@ -82,8 +82,8 @@ jobs:
       - name: Build and push API Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./api
-          file: ./Dockerfile
+          context: .
+          file: ./api/Dockerfile
           platforms: linux/arm64
           push: true
           tags: |
@@ -96,8 +96,8 @@ jobs:
       - name: Build and push Management Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./management
-          file: ./Dockerfile
+          context: . 
+          file: ./management/Dockerfile
           platforms: linux/arm64
           push: true
           tags: |
