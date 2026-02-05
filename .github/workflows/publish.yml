@@ -87,22 +87,6 @@ jobs:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         with:
           platforms: linux/${{ matrix.arch }}
-
-      - name: Build and push API Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./api
-          file: ./api/Dockerfile
-          platforms: linux/${{ matrix.arch }}
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/api:${{ needs.release.outputs.new_tag }}
-            ghcr.io/${{ github.repository }}/api:latest
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
       
       - name: Build and push Management Docker image
         uses: docker/build-push-action@v6
@@ -116,6 +100,22 @@ jobs:
             ghcr.io/${{ github.repository }}/management:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha  
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+
+      - name: Build and push API Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/api:${{ needs.release.outputs.new_tag }}
+            ghcr.io/${{ github.repository }}/api:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
           sbom: false
