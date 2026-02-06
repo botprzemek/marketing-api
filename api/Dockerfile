@@ -1,5 +1,7 @@
 FROM rust:1.93-slim AS builder
 
+WORKDIR /app
+
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
@@ -7,26 +9,18 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN cargo install cargo-chef sccache --locked
+RUN cargo install cargo-chef --locked
 
-ENV RUSTC_WRAPPER=sccache
-
-WORKDIR /app
-
-COPY Cargo.toml Cargo.lock ./
+COPY . .
 
 RUN cargo chef prepare --recipe-path recipe.json
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
     cargo chef cook --release --recipe-path recipe.json
-
-COPY . .
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,target=$SCCACHE_DIR,sharing=locked \
     cargo build --release --bin api
 
 
