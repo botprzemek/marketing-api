@@ -100,7 +100,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/management:${{ needs.release.outputs.new_tag }}
-            ${{ needs.release.outputs.part != 'patch' && 'ghcr.io/${{ github.repository }}/management:latest' || '' }}
+            ghcr.io/${{ github.repository }}/management:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -116,7 +116,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/api:${{ needs.release.outputs.new_tag }}
-            ${{ needs.release.outputs.part != 'patch' && 'ghcr.io/${{ github.repository }}/api:latest' || '' }}
+            ghcr.io/${{ github.repository }}/api:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
