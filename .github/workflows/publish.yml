@@ -54,12 +54,6 @@ jobs:
       packages: write
       contents: read
 
-    strategy:
-      matrix:
-        arch:
-          - amd64
-          - arm64
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -96,29 +90,29 @@ jobs:
         with:
           context: ./management
           file: ./management/Dockerfile
-          platforms: linux/${{ matrix.arch }}
+          platforms: linux/amd64,linux/arm64
           push: true
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/management:cache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/management:cache,mode=max
+          provenance: false
+          sbom: false
           tags: |
             ghcr.io/${{ github.repository }}/management:${{ needs.release.outputs.new_tag }}
             ghcr.io/${{ github.repository }}/management:latest
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
 
       - name: Build and push API Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./api
           file: ./api/Dockerfile
-          platforms: linux/${{ matrix.arch }}
+          platforms: linux/amd64,linux/arm64
           push: true
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/api:cache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/api:cache,mode=max
+          provenance: false
+          sbom: false
           tags: |
             ghcr.io/${{ github.repository }}/api:${{ needs.release.outputs.new_tag }}
             ghcr.io/${{ github.repository }}/api:latest
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
