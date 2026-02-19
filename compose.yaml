@@ -13,35 +13,45 @@ volumes:
 
 services:
   database:
-    image: surrealdb/surrealdb:latest
+    image: scylladb/scylla:latest
     container_name: oauth-database
-    entrypoint: /surreal start surrealkv://data
     user: 0:0
+    command: [
+      "--overprovisioned", "1",
+      "--smp", "1",
+      "--memory", "750M",
+      "--developer-mode", "1"
+    ]
     environment:
-      SURREAL_STRICT: true
-      SURREAL_AUTH: true
-      SURREAL_USER: root
-      SURREAL_PASS: root
+      SCYLLA_ENABLE_AUTH: "false"
     expose:
-      - 8000
-    volumes:
-      - database-data:/data
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      - "9042"
     ports:
-      - "8000:8000"
+      - "9042:9042"
+    volumes:
+      - database-data:/var/lib/scylla
+    healthcheck:
+      test: ["CMD", "cqlsh", "localhost", "9042", "-e", "DESCRIBE KEYSPACES"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  # cache:
-  #   image: valkey/valkey:latest
-  #   container_name: oauth-cache
-  #   entrypoint: valkey-server --appendonly yes
-  #   expose:
-  #     - 6379
-  #   volumes:
-  #     - cache-data:/data
+  cache:
+    image: valkey/valkey:latest
+    container_name: oauth-cache
+    entrypoint: valkey-server --appendonly yes
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+    volumes:
+      - cache-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "-h", "127.0.0.1", "-p", "6379", "PING"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
   # api:
   #   build: ./api

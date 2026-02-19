@@ -1,7 +1,7 @@
-pub mod server;
-pub mod router;
-pub mod middlewares;
 pub mod handlers;
+pub mod middlewares;
+pub mod router;
+pub mod server;
 
-pub use server::Server;
 pub use router::Routes;
+pub use server::Server;

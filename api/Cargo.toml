@@ -8,13 +8,20 @@ name = "oauth-api"
 path = "src/main.rs"
 
 [dependencies]
-axum = "0.8.8"
+axum = { version = "0.8.8", features = ["json"] }
 blake3 = "1.8.3"
 faker_rand = "0.1.1"
 rand = "0.8.5"
 serde = { version = "1.0.2", features = ["derive"] }
 serde_json = "1.0.0"
-surrealdb = "2.4.1"
+scylla = "1.5"
+tokio = { version = "1.12", features = ["full"] }
 thiserror = "2.0.18"
-tokio = { version = "1.0.0", features = ["full"] }
 tower-http = { version = "0.6.8", features = ["cors"] }
+futures = "0.3.6"
+uuid = { version = "1.0", features = ["serde", "v7"] }
+bigdecimal = "0.4"
+num-bigint = "0.3"
+tracing = "0.1.36"
+tracing-subscriber = { version = "0.3.14", features = ["env-filter"] }
+deadpool-redis = "0.23.0"

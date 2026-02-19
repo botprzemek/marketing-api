@@ -1,20 +1,29 @@
-use axum::Router;
-use axum::routing::{get};
+use crate::adapter::net::server::AppState;
+
+use super::handlers::{
+    game_get,
+    game_create,
+    game_get_by_id,
+    game_update_by_id,
+    game_delete_by_id
+};
+
+use axum::{
+    routing::{get,post,put,delete},
+    Router,
+};
 
 pub struct Routes;
 
 impl Routes {
-    pub fn create() -> Router {
+    pub fn create(state: AppState) -> Router {
         Router::new()
-            .route("/", get(|| async { "goodbye!" }))
+            .route("/game", get(game_get))
+            .route("/game", post(game_create))
+            .route("/game/{id}", get(game_get_by_id))
+            .route("/game/{id}", put(    game_update_by_id,
+))
+            .route("/game/{id}", delete(game_delete_by_id))
+            .with_state(state)
     }
 }
-    // .route("/", get(routes::paths))
-    // .route("/person/{id}", post(routes::create_person))
-    // .route("/person/{id}", get(routes::read_person))
-    // .route("/person/{id}", put(routes::update_person))
-    // .route("/person/{id}", delete(routes::delete_person))
-    // .route("/people", get(routes::list_people))
-    // .route("/session", get(routes::session))
-    // .route("/new_user", get(routes::make_new_user))
-    // .route("/new_token", get(routes::get_new_token));
