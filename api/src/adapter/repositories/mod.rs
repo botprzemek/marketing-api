@@ -1,1 +1,3 @@
-pub mod extab;
+pub mod games;
+
+pub use games::GamesRepository;

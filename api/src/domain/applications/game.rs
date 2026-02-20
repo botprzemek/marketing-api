@@ -2,10 +2,10 @@ use crate::domain::entities::extab::ExtabEntry;
 use crate::domain::repositories::extab::ExtabPort;
 
 pub struct ExtabApplication<R: ExtabPort> {
-    repository: R,
+    repository: Arc<R>,
 }
 
-impl<R: ExtabPort> ExtabApplication<R> {
+impl<R: ExtabPort> GamesApplication<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
     }
