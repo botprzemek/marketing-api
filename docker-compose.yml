@@ -1,0 +1,13 @@
+services:
+    form:
+        build: .
+        image: helpdesk/form:latest
+        pull_policy: never
+        container_name: helpdesk-form
+        ports:
+            - "0.0.0.0:80:3000"
+        environment:
+            NUXT_ZAMMAD_URL: ${NUXT_ZAMMAD_URL}
+            NUXT_ZAMMAD_TOKEN: ${NUXT_ZAMMAD_TOKEN}
+            NUXT_ZAMMAD_GROUP: ${NUXT_ZAMMAD_GROUP}
+            NUXT_ZAMMAD_AGENT: ${NUXT_ZAMMAD_AGENT}
