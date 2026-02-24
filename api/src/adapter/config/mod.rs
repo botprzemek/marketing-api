@@ -10,15 +10,15 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Result<Self, String> {
-        let server_host = var("SERVER_HOST")
-            .map_err(|_| "Missing environment variable SERVER_HOST")?;
+        let server_host =
+            var("SERVER_HOST").map_err(|_| "Missing environment variable SERVER_HOST")?;
         let server_port = var("SERVER_PORT")
             .map_err(|_| "Missing environment variable SERVER_PORT")?
             .parse::<i32>()
             .map_err(|_| "Invalid environment variable SERVER_PORT")?;
 
-        let database_host = var("DATABASE_HOST")
-            .map_err(|_| "Missing environment variable DATABASE_HOST")?;
+        let database_host =
+            var("DATABASE_HOST").map_err(|_| "Missing environment variable DATABASE_HOST")?;
         let database_port = var("DATABASE_PORT")
             .map_err(|_| "Missing environment variable DATABASE_PORT")?
             .parse::<i32>()

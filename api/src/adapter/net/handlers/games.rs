@@ -1,13 +1,13 @@
 use axum::{
-    Json, extract::{Path, State}, http::StatusCode, response::IntoResponse
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
 };
-use serde::{
-    Serialize,
-    Deserialize,
-};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::adapter::net::AppState;
+use crate::adapter::{net::AppState, repositories::games::GameRow};
 
 #[derive(Debug, Deserialize, Default)]
 pub struct Params {
@@ -16,7 +16,7 @@ pub struct Params {
 
 #[derive(Debug, Deserialize)]
 pub struct Body {
-    id: Uuid
+    id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -34,35 +34,32 @@ impl GamesHandler {
     pub async fn get(
         State(state): State<AppState>,
     ) -> Result<impl IntoResponse, (StatusCode, String)> {
-        let result = state.games_repository
+        let result = state
+            .games_repository
             .select_games()
             .await
             .map_err(internal_error)?;
 
-        Ok((
-            StatusCode::OK,
-            Json(result)
-        ))
+        Ok((StatusCode::OK, Json(result)))
     }
 
     pub async fn create(
         State(_state): State<AppState>,
-        Json(payload): Json<Body>
+        Json(payload): Json<Body>,
     ) -> Result<impl IntoResponse, (StatusCode, String)> {
         Ok((
-            StatusCode::CREATED, 
-            Json(Response { id: payload.id.to_string() })
+            StatusCode::CREATED,
+            Json(Response {
+                id: payload.id.to_string(),
+            }),
         ))
     }
 
     pub async fn get_by_id(
         State(_state): State<AppState>,
-        Path(Params { id }): Path<Params>
+        Path(Params { id }): Path<Params>,
     ) -> Result<impl IntoResponse, (StatusCode, String)> {
-        Ok((
-            StatusCode::OK,
-            Json(Response { id: id.to_string() })
-        ))
+        Ok((StatusCode::OK, Json(Response { id: id.to_string() })))
     }
 
     pub async fn update_by_id(
@@ -70,18 +67,13 @@ impl GamesHandler {
         Path(Params { id }): Path<Params>,
         Json(_payload): Json<Body>,
     ) -> Result<impl IntoResponse, (StatusCode, String)> {
-        Ok((
-            StatusCode::OK, 
-            Json(Response { id: id.to_string() })
-        ))
+        Ok((StatusCode::OK, Json(Response { id: id.to_string() })))
     }
 
     pub async fn delete_by_id(
         State(_state): State<AppState>,
         Path(Params { id: _ }): Path<Params>,
     ) -> Result<impl IntoResponse, (StatusCode,)> {
-        Ok((
-            StatusCode::NO_CONTENT,
-        ))
+        Ok((StatusCode::NO_CONTENT,))
     }
 }

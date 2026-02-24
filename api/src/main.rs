@@ -5,8 +5,7 @@ use adapter::net::Server;
 
 #[tokio::main]
 async fn main() {
-    let config = Config::load()
-        .expect("Failed to load the configuration");
+    let config = Config::load().expect("Failed to load the configuration");
 
     Server::new(config)
         .await
