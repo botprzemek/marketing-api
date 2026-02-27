@@ -1,0 +1,13 @@
+2Dockerfile
+docker-compose.yml
+.dockerignore
+
+node_modules
+.output
+.nuxt
+.nitro
+
+.env
+.git
+
+*.log

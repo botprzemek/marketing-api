@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@source "../../../layers/*/app/components/**/*";
+@source "../../../layers/*/app/layouts/**/*";
+@source "../../../layers/*/app/pages/**/*";
+
+@theme {
+    --font-display: "Work Sans", "Calibri", "sans-serif";
+
+    --grid-cols-side: 1fr 3fr;
+}
+
+@layer base {
+    body {
+        @apply w-screen min-h-screen flex place-items-center-safe place-content-center-safe;
+        @apply px-2 md:px-12 py-12;
+        @apply bg-slate-100/25;
+        @apply text-base text-slate-900 font-normal font-display;
+    }
+
+    #form {
+        @apply w-full max-w-3xl h-auto flex flex-col gap-12;
+    }
+}

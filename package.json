@@ -1,0 +1,31 @@
+{
+    "name": "helpdesk-form",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "nuxt build",
+        "dev": "nuxt dev",
+        "generate": "nuxt generate",
+        "preview": "nuxt preview",
+        "postinstall": "nuxt prepare",
+        "fmt": "oxfmt",
+        "fmt:check": "oxfmt --check",
+        "lint": "oxlint",
+        "lint:fix": "oxlint --fix",
+        "lint:gitlab": "oxlint --format=gitlab > gitlab-oxlint-report.json"
+    },
+    "devDependencies": {
+        "@nuxt/fonts": "0.14.0",
+        "@tailwindcss/vite": "4.2.1",
+        "nuxt": "4.3.1",
+        "oxfmt": "^0.35.0",
+        "oxlint": "^1.50.0",
+        "oxlint-tsgolint": "0.15.0",
+        "tailwindcss": "4.2.1",
+        "vue": "3.5.28",
+        "vue-router": "4.6.4"
+    },
+    "dependencies": {
+        "cheerio": "^1.2.0"
+    }
+}
